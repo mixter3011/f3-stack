@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type Generator struct {
@@ -21,51 +22,53 @@ func Project_generator(projectName string) *Generator {
 }
 
 func (pg *Generator) Generate() error {
-	if err := pg.create_project(); err != nil {
+	if err := pg.Create_project(); err != nil {
 		return fmt.Errorf("failed to create Flutter project: %w", err)
 	}
 
-	if err := pg.add_packages(); err != nil {
+	if err := pg.Add_packages(); err != nil {
 		return fmt.Errorf("failed to add packages: %w", err)
 	}
 
-	if err := pg.create_structure(); err != nil {
+	if err := pg.Create_structure(); err != nil {
 		return fmt.Errorf("failed to create folder structure: %w", err)
 	}
 
-	if err := pg.add_assets(); err != nil {
+	if err := pg.Add_assets(); err != nil {
 		return fmt.Errorf("failed to copy assets: %w", err)
 	}
 
-	if err := pg.update_yaml(); err != nil {
+	if err := pg.Update_yaml(); err != nil {
 		return fmt.Errorf("failed to update pubspec.yaml: %w", err)
 	}
 
-	if err := pg.generate_files(); err != nil {
+	if err := pg.Generate_files(); err != nil {
 		return fmt.Errorf("failed to generate files: %w", err)
 	}
 
-	if err := pg.update_iOS(); err != nil {
+	if err := pg.Update_iOS(); err != nil {
 		return fmt.Errorf("failed to update iOS files: %w", err)
 	}
 
-	if err := pg.runcmd(); err != nil {
+	if err := pg.Runcmd(); err != nil {
 		return fmt.Errorf("failed to run build_runner: %w", err)
 	}
 
 	return nil
 }
 
-func (pg *Generator) create_project() error {
-	fmt.Println("📦 Creating Flutter project...")
+func (pg *Generator) Create_project() error {
 	cmd := exec.Command("flutter", "create", pg.ProjectName)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(string(output))
+		return err
+	}
+	time.Sleep(500 * time.Millisecond)
+	return nil
 }
 
-func (pg *Generator) add_packages() error {
-	fmt.Println("📚 Adding packages...")
+func (pg *Generator) Add_packages() error {
 	packages := []string{
 		"flutter_bloc:^9.1.0",
 		"freezed_annotation:^3.0.0",
@@ -87,21 +90,18 @@ func (pg *Generator) add_packages() error {
 	projectDir := filepath.Join(".", pg.ProjectName)
 
 	for _, pkg := range packages {
-		fmt.Printf("  Adding %s\n", pkg)
 		cmd := exec.Command("flutter", "pub", "add", pkg)
 		cmd.Dir = projectDir
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
+		if output, err := cmd.CombinedOutput(); err != nil {
+			fmt.Println(string(output))
 			return err
 		}
 	}
-
+	time.Sleep(500 * time.Millisecond)
 	return nil
 }
 
-func (pg *Generator) create_structure() error {
-	fmt.Println("📂 Creating folder structure...")
+func (pg *Generator) Create_structure() error {
 	libDir := filepath.Join(pg.ProjectName, "lib")
 
 	folders := []string{
@@ -152,13 +152,11 @@ func (pg *Generator) create_structure() error {
 	if err := os.WriteFile(logoPath, []byte("placeholder image content"), 0644); err != nil {
 		return err
 	}
-
+	time.Sleep(300 * time.Millisecond)
 	return nil
 }
 
-func (pg *Generator) add_assets() error {
-	fmt.Println("📷 Copying assets...")
-
+func (pg *Generator) Add_assets() error {
 	destImagesDir := filepath.Join(pg.ProjectName, "assets", "images")
 	if err := os.MkdirAll(destImagesDir, 0755); err != nil {
 		return fmt.Errorf("failed to create assets/images directory: %w", err)
@@ -176,7 +174,6 @@ func (pg *Generator) add_assets() error {
 		}
 
 		_, filename := filepath.Split(path)
-
 		destPath := filepath.Join(destImagesDir, filename)
 
 		if !d.IsDir() {
@@ -188,16 +185,13 @@ func (pg *Generator) add_assets() error {
 			if err := os.WriteFile(destPath, content, 0644); err != nil {
 				return err
 			}
-			fmt.Printf("  Copied asset: %s to %s\n", filename, destPath)
 		}
 
 		return nil
 	})
 }
 
-func (pg *Generator) update_yaml() error {
-	fmt.Println("📋 Updating pubspec.yaml...")
-
+func (pg *Generator) Update_yaml() error {
 	content, exists := templateData["pubspec.yaml"]
 	if !exists {
 		return fmt.Errorf("pubspec.yaml template not found in embedded data")
@@ -206,12 +200,11 @@ func (pg *Generator) update_yaml() error {
 	updatedContent := strings.ReplaceAll(content, "name: f3stack", fmt.Sprintf("name: %s", pg.ProjectName))
 
 	pubspecPath := filepath.Join(pg.ProjectName, "pubspec.yaml")
+	time.Sleep(300 * time.Millisecond)
 	return os.WriteFile(pubspecPath, []byte(updatedContent), 0644)
 }
 
-func (pg *Generator) generate_files() error {
-	fmt.Println("📝 Generating template files...")
-
+func (pg *Generator) Generate_files() error {
 	files := map[string]string{
 		"lib/core/constants/routes.dart": "routes.dart",
 
@@ -263,33 +256,32 @@ func (pg *Generator) generate_files() error {
 			return err
 		}
 	}
-
+	time.Sleep(500 * time.Millisecond)
 	return nil
 }
 
-func (pg *Generator) update_iOS() error {
-	fmt.Println("🍎 Updating iOS files...")
-
+func (pg *Generator) Update_iOS() error {
 	infoPlistPath := filepath.Join(pg.ProjectName, "ios", "Runner", "Info.plist")
 	plistContent, exists := templateData["Info.plist"]
 	if !exists {
-		fmt.Println("  Warning: Info.plist template not found. iOS configuration must be updated manually.")
 		return nil
 	}
 
 	if err := os.MkdirAll(filepath.Dir(infoPlistPath), 0755); err != nil {
 		return err
 	}
-
+	time.Sleep(200 * time.Millisecond)
 	return os.WriteFile(infoPlistPath, []byte(plistContent), 0644)
 }
 
-func (pg *Generator) runcmd() error {
-	fmt.Println("🏗️  Running build_runner...")
-
+func (pg *Generator) Runcmd() error {
 	cmd := exec.Command("dart", "run", "build_runner", "build", "--delete-conflicting-outputs")
 	cmd.Dir = pg.ProjectName
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(string(output))
+		return err
+	}
+	time.Sleep(500 * time.Millisecond)
+	return nil
 }

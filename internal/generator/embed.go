@@ -1656,6 +1656,9 @@ dependencies:
   url_launcher_ios: ^6.3.3
   google_sign_in: ^6.3.0
 
+dependency_overrides:
+  analyzer: ^6.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

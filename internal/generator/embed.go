@@ -170,6 +170,46 @@ class AppRoutes {
 }
 `,
 
+	"loader.dart": `import 'dart:async';
+import 'package:flutter/material.dart';
+
+class LoadingOverlay extends StatefulWidget {
+  final String gifAssetPath;
+  final Duration displayDuration;
+  final VoidCallback onCompleted;
+
+  const LoadingOverlay({
+    super.key,
+    required this.gifAssetPath,
+    this.displayDuration = const Duration(milliseconds: 1500),
+    required this.onCompleted,
+  });
+
+  @override
+  State<LoadingOverlay> createState() => _LoadingOverlayState();
+}
+
+class _LoadingOverlayState extends State<LoadingOverlay> {
+  @override
+  void initState() {
+    super.initState();
+    Timer(widget.displayDuration, widget.onCompleted);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.white,
+      child: Center(
+        child: Image.asset(widget.gifAssetPath, width: 150, height: 150),
+      ),
+    );
+  }
+}
+`,
+
 	"user_model.dart": `import '../../domain/entities/user_entity.dart';
 
 class UserModel {
@@ -448,7 +488,8 @@ class AuthState with _$AuthState {
 }
 `,
 
-	"signin_page.dart": `import '/core/constants/routes.dart';
+	"signin_page.dart": `import '/core/utils/loader.dart';
+import '/core/constants/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -512,7 +553,21 @@ class _SignUpScreenState extends State<SignInScreen> {
               setState(() => isLoading = true);
             } else if (stateString.contains('authenticated')) {
               setState(() => isLoading = false);
-              AppRoutes.navigateToAndRemoveUntil(context, AppRoutes.home);
+              Navigator.of(context).push(
+                PageRouteBuilder(
+                  opaque: true,
+                  pageBuilder:
+                      (context, _, __) => LoadingOverlay(
+                        gifAssetPath: 'assets/gifs/loader.gif',
+                        onCompleted: () {
+                          AppRoutes.navigateToAndRemoveUntil(
+                            context,
+                            AppRoutes.home,
+                          );
+                        },
+                      ),
+                ),
+              );
             } else if (stateString.contains('unauthenticated')) {
               setState(() => isLoading = false);
             } else if (stateString.contains('error')) {
@@ -681,7 +736,7 @@ class _SignUpScreenState extends State<SignInScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 180),
+                  const SizedBox(height: 140),
                   Text(
                     'This Signin page is powered by Firebase Auth.\nSign in using Email & Password / Google Auth.',
                     style: ShadTheme.of(context).textTheme.muted,
@@ -697,7 +752,8 @@ class _SignUpScreenState extends State<SignInScreen> {
 }
 `,
 
-	"signup_page.dart": `import '/core/constants/routes.dart';
+	"signup_page.dart": `import '/core/utils/loader.dart';
+import '/core/constants/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -770,7 +826,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
               setState(() => isLoading = true);
             } else if (stateString.contains('authenticated')) {
               setState(() => isLoading = false);
-              AppRoutes.navigateToAndRemoveUntil(context, AppRoutes.home);
+              Navigator.of(context).push(
+                PageRouteBuilder(
+                  opaque: true,
+                  pageBuilder:
+                      (context, _, __) => LoadingOverlay(
+                        gifAssetPath: 'assets/gifs/loader.gif',
+                        onCompleted: () {
+                          AppRoutes.navigateToAndRemoveUntil(
+                            context,
+                            AppRoutes.home,
+                          );
+                        },
+                      ),
+                ),
+              );
             } else if (stateString.contains('unauthenticated')) {
               setState(() => isLoading = false);
             } else if (stateString.contains('error')) {
@@ -1073,7 +1143,17 @@ class ActionButtons extends StatelessWidget {
   const ActionButtons({super.key});
 
   Future<void> _launch() async {
-    const String githubUrl = 'https://github.com/mixter3011';
+    const String githubUrl = 'https://github.com/mixter3011/f3-stack.git';
+    final Uri url = Uri.parse(githubUrl);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      throw Exception('Could not launch $url');
+    }
+  }
+
+  Future<void> _nav() async {
+    const String githubUrl = 'https://f3-docs.vercel.app/';
     final Uri url = Uri.parse(githubUrl);
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -1088,7 +1168,7 @@ class ActionButtons extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: _nav,
           icon: const Icon(Icons.arrow_forward, color: Colors.black),
           label: const Text(
             'Get Started',
@@ -1131,44 +1211,7 @@ class ActionButtons extends StatelessWidget {
     );
   }
 }
-`,
 
-	"bottom_bar.dart": `import 'package:flutter/material.dart';
-
-class CustomBottomNavBar extends StatelessWidget {
-  const CustomBottomNavBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.book_outlined),
-          activeIcon: Icon(Icons.book),
-          label: 'Docs',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.code),
-          activeIcon: Icon(Icons.code),
-          label: 'GitHub',
-        ),
-      ],
-      currentIndex: 0,
-      selectedItemColor: const Color(0xFF6C63FF),
-      unselectedItemColor: Color(0xFF666666),
-      backgroundColor: Colors.white,
-      elevation: 8,
-      onTap: (index) {
-        // Navigation logic would go here
-      },
-    );
-  }
-}
 `,
 
 	"content.dart": `import 'hero.dart';
@@ -1480,9 +1523,20 @@ class HeroSec extends StatelessWidget {
 
 	"started.dart": `import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Started extends StatelessWidget {
   const Started({super.key});
+
+  Future<void> _launch() async {
+    const String githubUrl = 'https://f3-docs.vercel.app/';
+    final Uri url = Uri.parse(githubUrl);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      throw Exception('Could not launch $url');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1525,7 +1579,7 @@ class Started extends StatelessWidget {
               ],
             ),
             child: const Text(
-              'create-f3-app@latest',
+              'f3-stack create',
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 16,
@@ -1535,7 +1589,7 @@ class Started extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: _launch,
             icon: const Icon(Icons.open_in_new, color: Color(0xFF6C63FF)),
             label: const Text(
               'Read the docs',
@@ -1560,6 +1614,7 @@ class Started extends StatelessWidget {
     );
   }
 }
+
 `,
 
 	"Info.plist": `<?xml version="1.0" encoding="UTF-8"?>

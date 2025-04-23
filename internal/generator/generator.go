@@ -148,18 +148,35 @@ func (pg *Generator) Create_structure() error {
 		return err
 	}
 
+	gifsDir := filepath.Join(pg.ProjectName, "assets", "gifs")
+	if err := os.MkdirAll(gifsDir, 0755); err != nil {
+		return err
+	}
+
 	logoPath := filepath.Join(assetsDir, "logo.png")
 	if err := os.WriteFile(logoPath, []byte("placeholder image content"), 0644); err != nil {
 		return err
 	}
+
+	loaderPath := filepath.Join(gifsDir, "loader.gif")
+	if err := os.WriteFile(loaderPath, []byte("placeholder gif content"), 0644); err != nil {
+		return err
+	}
+
 	time.Sleep(300 * time.Millisecond)
 	return nil
 }
 
 func (pg *Generator) Add_assets() error {
 	destImagesDir := filepath.Join(pg.ProjectName, "assets", "images")
+	destGifsDir := filepath.Join(pg.ProjectName, "assets", "gifs")
+
 	if err := os.MkdirAll(destImagesDir, 0755); err != nil {
 		return fmt.Errorf("failed to create assets/images directory: %w", err)
+	}
+
+	if err := os.MkdirAll(destGifsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create assets/gifs directory: %w", err)
 	}
 
 	rootPath := "assets"
@@ -174,7 +191,13 @@ func (pg *Generator) Add_assets() error {
 		}
 
 		_, filename := filepath.Split(path)
-		destPath := filepath.Join(destImagesDir, filename)
+
+		var destPath string
+		if strings.HasSuffix(filename, ".gif") {
+			destPath = filepath.Join(destGifsDir, filename)
+		} else {
+			destPath = filepath.Join(destImagesDir, filename)
+		}
 
 		if !d.IsDir() {
 			content, err := embeddedAssets.ReadFile(path)
@@ -227,7 +250,6 @@ func (pg *Generator) Generate_files() error {
 
 		"lib/features/home/presentation/pages/home_page.dart":       "home_page.dart",
 		"lib/features/home/presentation/widgets/action_button.dart": "action_button.dart",
-		"lib/features/home/presentation/widgets/bottom_bar.dart":    "bottom_bar.dart",
 		"lib/features/home/presentation/widgets/content.dart":       "content.dart",
 		"lib/features/home/presentation/widgets/feature_grid.dart":  "feature_grid.dart",
 		"lib/features/home/presentation/widgets/feature_card.dart":  "feature_card.dart",
@@ -235,9 +257,10 @@ func (pg *Generator) Generate_files() error {
 		"lib/features/home/presentation/widgets/hero.dart":          "hero.dart",
 		"lib/features/home/presentation/widgets/started.dart":       "started.dart",
 
-		"lib/main.dart":         "main.dart",
-		"test/widget_test.dart": "widget_test.dart",
-		"ios/Runner/Info.plist": "Info.plist",
+		"lib/main.dart":              "main.dart",
+		"test/widget_test.dart":      "widget_test.dart",
+		"lib/core/utils/loader.dart": "loader.dart",
+		"ios/Runner/Info.plist":      "Info.plist",
 	}
 
 	for filePath, templateKey := range files {

@@ -76,7 +76,7 @@ func (pg *Generator) Add_packages() error {
 		"firebase_auth:^5.5.2",
 		"json_annotation:^4.9.0",
 		"equatable:^2.0.7",
-		"shadcn_ui:^0.24.0",
+		"shadcn_ui:^0.30.1",
 		"google_fonts:^6.2.1",
 		"url_launcher:^6.3.1",
 		"cached_network_image:^3.4.1",

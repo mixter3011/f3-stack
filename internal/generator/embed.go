@@ -1699,29 +1699,26 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   flutter_bloc: ^9.1.0
-  freezed_annotation: ^3.0.0
+  freezed_annotation: ^2.4.4
   firebase_core: ^3.13.0
   firebase_auth: ^5.5.2
   json_annotation: ^4.9.0
   equatable: ^2.0.7
-  shadcn_ui: ^0.24.0
+  shadcn_ui: ^0.30.1
   google_fonts: ^6.2.1
   url_launcher: ^6.3.1
   cached_network_image: ^3.4.1
   url_launcher_ios: ^6.3.3
   google_sign_in: ^6.3.0
 
-dependency_overrides:
-  analyzer: ^6.2.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
-  build_runner: ^2.4.0
-  freezed: ^3.0.6
-  json_serializable: ^6.7.0
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
 
 # The following section is specific to Flutter packages.
 flutter:
